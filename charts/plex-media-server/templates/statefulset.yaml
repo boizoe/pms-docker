@@ -18,7 +18,12 @@ spec:
     metadata:
       labels:
         {{- include "pms-chart.labels" . | nindent 8 }}
+      annotations:
+        {{- toYaml .Values.statefulSet.podAnnotations | nindent 8 }}
     spec:
+      {{- if .Values.runtimeClassName }}
+      runtimeClassName: {{ .Values.runtimeClassName | quote }}
+      {{- end }}
       serviceAccountName: {{ include "pms-chart.serviceAccountName" . }}
       tolerations:
         {{- toYaml .Values.tolerations | nindent 8 }}
@@ -30,6 +35,11 @@ spec:
       priorityClassName: {{ .Values.priorityClassName | quote }}
       {{- end }}
       volumes:
+      {{- if .Values.pms.configExistingClaim }}
+      - name: pms-config
+        persistentVolumeClaim:
+          claimName: {{ .Values.pms.configExistingClaim | quote }}
+      {{- end }}
       - name: pms-transcode
         emptyDir: {}
       {{- if and .Values.rclone.enabled .Values.rclone.configSecret }}
@@ -101,7 +111,7 @@ spec:
         {{- end }}
         {{- range $key, $value := .Values.extraEnv }}
         - name: {{ $key }}
-          value: {{ $value }}
+          value: {{ $value | quote }}
         {{- end }}
         {{- with .Values.pms.resources }}
         resources:
@@ -164,6 +174,7 @@ spec:
       {{- with .Values.extraContainers }}
 {{- toYaml . | nindent 6 }}
       {{- end }}
+  {{- if not .Values.pms.configExistingClaim }}
   volumeClaimTemplates:
   - metadata:
       name: pms-config
@@ -175,3 +186,4 @@ spec:
       resources:
         requests:
           storage: {{ .Values.pms.configStorage }}
+  {{- end }}

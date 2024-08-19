@@ -52,7 +52,7 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@v5
         with:
-          file: ./Dockerfile.arm64
+          file: ./Dockerfile
           platforms: linux/arm64
           push: true
           labels: ${{ steps.meta.outputs.labels }}
